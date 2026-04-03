@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amu Hotel Access Map</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  #map { width: 100%; height: 100%; }
+
+  .marker {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .marker__dot {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  }
+
+  .marker--hotel .marker__dot {
+    background: #fff;
+  }
+
+  .marker--station .marker__dot {
+    background: #c3bcb2;
+  }
+
+  .marker__icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .marker__label {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+(function () {
+  var HOTEL = { lat: 33.2785833, lng: 131.5030278, name: 'HOTEL' };
+  var STATION = { lat: 33.2793000, lng: 131.5003073, name: '別府駅' };
+  var MAP_ID = 'c9289c731e6bc6c03d298152';
+  var apiKey = window.GOOGLE_MAPS_API_KEY || '';
+
+  function createMarker(kind, place) {
+    var el = document.createElement('div');
+    el.className = 'marker marker--' + kind;
+
+    var dot = document.createElement('div');
+    dot.className = 'marker__dot';
+
+    var icon = document.createElement('img');
+    icon.className = 'marker__icon';
+    icon.src = kind === 'hotel'
+      ? './assets/images/logo-amu.svg'
+      : './assets/images/icon-station.svg';
+    icon.alt = place.name;
+    dot.appendChild(icon);
+
+    var label = document.createElement('div');
+    label.className = 'marker__label';
+    label.textContent = place.name;
+
+    el.appendChild(dot);
+    el.appendChild(label);
+    return el;
+  }
+
+  function initMap() {
+    var map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: (HOTEL.lat + STATION.lat) / 2, lng: (HOTEL.lng + STATION.lng) / 2 },
+      zoom: 16,
+      mapId: MAP_ID,
+      disableDefaultUI: true,
+      zoomControl: false,
+      gestureHandling: 'greedy',
+      clickableIcons: false,
+    });
+
+    var AdvancedMarker = google.maps.marker.AdvancedMarkerElement;
+
+    new AdvancedMarker({
+      map: map,
+      position: { lat: HOTEL.lat, lng: HOTEL.lng },
+      content: createMarker('hotel', HOTEL),
+      zIndex: 100,
+    });
+
+    new AdvancedMarker({
+      map: map,
+      position: { lat: STATION.lat, lng: STATION.lng },
+      content: createMarker('station', STATION),
+      zIndex: 99,
+    });
+  }
+
+  if (!apiKey) {
+    document.getElementById('map').innerHTML = '<p style="padding:20px;color:#999;">Google Maps API キーが未設定です</p>';
+    return;
+  }
+
+  var script = document.createElement('script');
+  script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey) + '&v=weekly&libraries=marker&callback=__initAmuMap';
+  script.async = true;
+  script.defer = true;
+  window.__initAmuMap = initMap;
+  document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>
